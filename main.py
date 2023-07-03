@@ -12,8 +12,8 @@ import writeDisplayData
 #exePath = sys.argv[2]
 new_display_stats = []
 
-romPath = "D:\\jcost\\Documents\\output\\Pokemon Stadium (U) [!].z64"
-exePath = "D:\\jcost\\Documents\\output\\n64-checksum.exe"
+romPath = ""
+exePath = ""
 
 randomizer = randomizePokemonBaseValues.BaseValuesRandomizer()
 
@@ -34,8 +34,15 @@ with open(romPath, "rb+") as rom:
         rom.write(randomized_base_stats)
         rom.seek(18, 1)
 
-    rom.seek(9119640)
+    rom.seek(9119629)
     for j in range(0, 151):
+        new_attacks = util.Util.random_int_set(1, 164, 4)
+        new_attacks_bytearray = bytearray()
+        for attack in new_attacks:
+            new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
+        rom.write(new_attacks_bytearray)
+
+        rom.seek(7, 1)
         for k in range(0, 5):
             ev = int.to_bytes(evs[j][k], 2, "big")
             rom.write(ev)
@@ -44,7 +51,7 @@ with open(romPath, "rb+") as rom:
         rom.seek(6, 1)
         disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
         rom.write(disp)
-        rom.seek(56, 1)
+        rom.seek(45, 1)
 
 n64CS = n64Checksum.CheckSum(exePath, romPath)
 n64CS.callsubprocess()
