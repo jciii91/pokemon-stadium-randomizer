@@ -15,7 +15,7 @@ class BaseValuesRandomizer:
     def set_original_stats(self, stats_array):
         self.stats = stats_array
 
-    def randomizestats(self):
+    def randomize_stats(self):
         bst = sum(self.stats)
         remaining_bst = bst - sum(MIN_BASE_STATS)
         new_stats_bytes = bytearray()

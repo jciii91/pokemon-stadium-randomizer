@@ -11,3 +11,6 @@ Randomizer for the N64 game Pokémon Stadium.
  - Individual base stat caps adjusted
 	- Like the minimum values, the max values are tied to the max for each stat in the game
 	- HP is the exception. Chansey has a HP BST of 250, so instead Snorlax's HP value is used. (The 2nd highest HP stat)
+
+0.3
+ - Gym Castle pokemon are being randomized the same way rentals are
