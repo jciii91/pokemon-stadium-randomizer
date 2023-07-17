@@ -14,3 +14,6 @@ Randomizer for the N64 game Pokémon Stadium.
 
 0.3
  - Gym Castle pokemon are being randomized the same way rentals are
+
+0.3.1
+ - Reworked how base stats are randomized. Base stats are calculated using percentages now, percentage values are not set in stone.

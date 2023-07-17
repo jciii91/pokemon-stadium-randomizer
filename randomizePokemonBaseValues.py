@@ -1,42 +1,55 @@
 import random
+import math
 
-# global base stat constants
-# min stat of each category is smallest seen in game
-MIN_BASE_STATS = [10, 5, 5, 15, 20]
-# same for max stats except for HP
-# Chansey's 250 is too high so Snorlax is being used
-MAX_BASE_STATS = [160, 134, 180, 140, 154]
+# [HP, ATK, DEF, SPD, SPC]
+# global base stat constants (units are %)
+MIN_BASE_PERCENT = [15, 15, 15, 15, 15]
+MAX_BASE_PERCENT = [43, 43, 43, 43, 43]
 
 
 class BaseValuesRandomizer:
     def __init__(self):
-        self.stats = []
+        self.stats = bytearray()
 
     def set_original_stats(self, stats_array):
         self.stats = stats_array
 
     def randomize_stats(self):
-        bst = sum(self.stats)
-        remaining_bst = bst - sum(MIN_BASE_STATS)
+        bst_str = self.stats.hex()
+        bst_list = []
+        for offset in range(0, 5):
+            index = offset * 2
+            bst_list.append(int(bst_str[index:index+2], 16))
+        bst = sum(bst_list)
         new_stats_bytes = bytearray()
 
         while True:
             new_stats = [0, 0, 0, 0, 0]
-            remaining_bst = bst
+            remaining_percentage = 100
+            bst_percentage = 0
             for i in range(0, 4):
-                if remaining_bst > MIN_BASE_STATS[i]:
-                    if remaining_bst < MAX_BASE_STATS[i]:
-                        new_stats[i] = random.randrange(MIN_BASE_STATS[i], remaining_bst)
+                if remaining_percentage > MIN_BASE_PERCENT[i]:
+                    if remaining_percentage < MAX_BASE_PERCENT[i]:
+                        bst_percentage = random.randrange(MIN_BASE_PERCENT[i], remaining_percentage)
                     else:
-                        new_stats[i] = random.randrange(MIN_BASE_STATS[i], MAX_BASE_STATS[i])
+                        bst_percentage = random.randrange(MIN_BASE_PERCENT[i], MAX_BASE_PERCENT[i])
                 else:
-                    new_stats[i] = MIN_BASE_STATS[i]
-                remaining_bst = remaining_bst - new_stats[i]
-            new_stats[4] = bst - sum(new_stats)
-            if MAX_BASE_STATS[4] >= new_stats[4] >= MIN_BASE_STATS[4]:
+                    bst_percentage = MIN_BASE_PERCENT[i]
+                new_stats[i] = math.floor(bst * (bst_percentage/100))
+                remaining_percentage = remaining_percentage - bst_percentage
+            if MAX_BASE_PERCENT[4] >= bst_percentage >= MIN_BASE_PERCENT[4]:
+                new_stats[4] = math.floor(bst * (bst_percentage/100))
                 break
 
+        random.shuffle(new_stats)
         for stat in new_stats:
-            new_stats_bytes.extend(stat.to_bytes(1, "big"))
+            try:
+                new_stats_bytes.extend(stat.to_bytes(1, "big"))
+            except OverflowError:
+                print("ERROR: BST is too high.")
+                print("BST_STR: " + str(bst_str))
+                print("BST: " + str(bst))
+                print("STATS: " + str(new_stats))
+                exit(1)
 
         return new_stats_bytes
