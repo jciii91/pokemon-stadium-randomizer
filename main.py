@@ -5,6 +5,7 @@ import util
 import n64Checksum
 import constants
 import randomizePokemonBaseValues
+import randomMovesetGenerator
 import writeDisplayData
 
 if len(sys.argv) != 3:
@@ -13,13 +14,14 @@ if len(sys.argv) != 3:
 
 romPath = sys.argv[1]
 exePath = sys.argv[2]
-new_display_stats = []
 
 # romPath = "PKStadium1-0(US).z64"
 # exePath = "n64-checksum.exe"
 
 randomizer = randomizePokemonBaseValues.BaseValuesRandomizer()
 
+new_display_stats = []
+bst_list = []
 evs = []
 ivs = []
 for ev_set in range(0, 151):
@@ -30,6 +32,14 @@ with open(romPath, "rb+") as rom:
     rom.seek(465825)
     for i in range(0, 151):
         stats = bytearray(rom.read(5))
+
+        bst_str = stats.hex()
+        bst = 0
+        for offset in range(0, 5):
+            index = offset * 2
+            bst = bst + int(bst_str[index:index + 2], 16)
+        bst_list.append(bst)
+
         rom.seek(-5, 1)
         randomizer.set_original_stats(stats)
         randomized_base_stats = randomizer.randomize_stats()
@@ -51,7 +61,7 @@ with open(romPath, "rb+") as rom:
                 rom.write(bytes.fromhex(new_type))
 
                 rom.seek(1, 1)
-                new_attacks = util.Util.random_int_set(1, 164, 4)
+                new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num])
                 new_attacks_bytearray = bytearray()
                 for attack in new_attacks:
                     new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
@@ -86,9 +96,10 @@ with open(romPath, "rb+") as rom:
             rom.seek(56, 1)
         rom.seek(16, 1)
 
+    # randomize gym castle rentals
     rom.seek(9119629)
     for j in range(0, 149):
-        new_attacks = util.Util.random_int_set(1, 164, 4)
+        new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num])
         new_attacks_bytearray = bytearray()
         for attack in new_attacks:
             new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
