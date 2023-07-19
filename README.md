@@ -23,3 +23,11 @@ Randomizer for the N64 game Pokémon Stadium.
  - Lower BST Pokémon have a better chance at better moves, higher BST means a lower chance
  - 2 slots are reserved for physical moves, 1 for special, and 1 for status.
  - Need to address a bug where duplicate moves can show up. (e.g. I genereated Moltres that knew Mega Punch twice)
+
+0.3.3
+ - changed how move slots are assigned
+	- Slot 1: Matches higher base stat between ATK and SPC
+	- Slot 2: Either a ATK or SPC move
+	- Slot 3: A STA move
+	- Slot 4: Any of the 3 categories
+ - possible bug in how the BSTs are being written after being randomized, needs investigation to confirm existence and cause

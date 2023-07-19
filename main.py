@@ -32,17 +32,17 @@ with open(romPath, "rb+") as rom:
     rom.seek(465825)
     for i in range(0, 151):
         stats = bytearray(rom.read(5))
-
-        bst_str = stats.hex()
-        bst = 0
-        for offset in range(0, 5):
-            index = offset * 2
-            bst = bst + int(bst_str[index:index + 2], 16)
-        bst_list.append(bst)
-
         rom.seek(-5, 1)
         randomizer.set_original_stats(stats)
         randomized_base_stats = randomizer.randomize_stats()
+
+        bst_str = randomized_base_stats.hex()
+        bst = []
+        for offset in range(0, 5):
+            index = offset * 2
+            bst.append(int(bst_str[index:index + 2], 16))
+        bst_list.append(bst)
+
         new_display_stats.append(randomized_base_stats)
         rom.write(randomized_base_stats)
         rom.seek(18, 1)
@@ -99,7 +99,7 @@ with open(romPath, "rb+") as rom:
     # randomize gym castle rentals
     rom.seek(9119629)
     for j in range(0, 149):
-        new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num])
+        new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j])
         new_attacks_bytearray = bytearray()
         for attack in new_attacks:
             new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))

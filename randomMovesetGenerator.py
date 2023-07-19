@@ -26,10 +26,26 @@ def get_random_move(attack_type, distribution):
 
 class MovesetGenerator:
     @staticmethod
-    def get_random_moveset(bst):
-        attack_types = ["PHY", "PHY", "SPE", "STA"]
+    def get_random_moveset(bst_list):
+        bst = sum(bst_list)
+
+        first_type = "PHY" if bst_list[1] > bst_list[4] else "SPE"
+        coin_flip = random.randrange(1, 100)
+        if coin_flip <= 50:
+            second_type = "PHY"
+        else:
+            second_type = "SPE"
+        third_type = "STA"
+        one_in_three = random.randrange(1, 99)
+        if one_in_three <= 33:
+            fourth_type = "PHY"
+        elif one_in_three <= 66:
+            fourth_type = "SPE"
+        else:
+            fourth_type = "STA"
+
+        attack_types = [first_type, second_type, third_type, fourth_type]
         moveset = []
-        distribution = []
         if bst <= 225:
             distribution = constants.stat_distribution_list[0]
         elif bst <= 300:
@@ -42,6 +58,12 @@ class MovesetGenerator:
             distribution = constants.stat_distribution_list[4]
 
         for atk_type in attack_types:
-            moveset.append(get_random_move(atk_type, distribution))
+            random_move = get_random_move(atk_type, distribution)
+            while True:
+                if random_move in moveset:
+                    random_move = get_random_move(atk_type, distribution)
+                else:
+                    break
+            moveset.append(random_move)
 
         return moveset
