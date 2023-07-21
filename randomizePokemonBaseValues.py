@@ -15,11 +15,9 @@ class BaseValuesRandomizer:
         self.stats = stats_array
 
     def randomize_stats(self):
-        bst_str = self.stats.hex()
         bst_list = []
-        for offset in range(0, 5):
-            index = offset * 2
-            bst_list.append(int(bst_str[index:index+2], 16))
+        for stat in self.stats:
+            bst_list.append(stat)
         bst = sum(bst_list)
         new_stats_bytes = bytearray()
 
@@ -37,8 +35,8 @@ class BaseValuesRandomizer:
                     bst_percentage = MIN_BASE_PERCENT[i]
                 new_stats[i] = math.floor(bst * (bst_percentage/100))
                 remaining_percentage = remaining_percentage - bst_percentage
-            if MAX_BASE_PERCENT[4] >= bst_percentage >= MIN_BASE_PERCENT[4]:
-                new_stats[4] = math.floor(bst * (bst_percentage/100))
+            if MAX_BASE_PERCENT[4] >= remaining_percentage >= MIN_BASE_PERCENT[4]:
+                new_stats[4] = bst - sum(new_stats)
                 break
 
         random.shuffle(new_stats)
@@ -47,7 +45,7 @@ class BaseValuesRandomizer:
                 new_stats_bytes.extend(stat.to_bytes(1, "big"))
             except OverflowError:
                 print("ERROR: BST is too high.")
-                print("BST_STR: " + str(bst_str))
+                print("BST_STR: " + str(self.stats))
                 print("BST: " + str(bst))
                 print("STATS: " + str(new_stats))
                 exit(1)

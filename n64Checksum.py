@@ -6,5 +6,5 @@ class CheckSum:
         self.exePath = exepath
         self.romPath = rompath
 
-    def callsubprocess(self):
+    def call_subprocess(self):
         subprocess.call([self.exePath, self.romPath])
