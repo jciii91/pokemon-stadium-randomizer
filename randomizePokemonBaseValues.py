@@ -24,7 +24,6 @@ class BaseValuesRandomizer:
         while True:
             new_stats = [0, 0, 0, 0, 0]
             remaining_percentage = 100
-            bst_percentage = 0
             for i in range(0, 4):
                 if remaining_percentage > MIN_BASE_PERCENT[i]:
                     if remaining_percentage < MAX_BASE_PERCENT[i]:

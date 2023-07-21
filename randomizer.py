@@ -9,7 +9,7 @@ import randomMovesetGenerator
 import writeDisplayData
 
 
-def randomizer_func(rom_path, output_path):
+def randomizer_func(rom_path, output_path=''):
     exe_path = "n64-checksum.exe"
 
     randomizer = randomizePokemonBaseValues.BaseValuesRandomizer()
@@ -22,7 +22,10 @@ def randomizer_func(rom_path, output_path):
         evs.append(util.Util.random_int_set(0, 65535, 5))
         ivs.append(util.Util.random_string_hex(4))
 
-    output_file = output_path + "/PKseed.z64"
+    if output_path == '':
+        output_file = "PKseed.z64"
+    else:
+        output_file = output_path + "/PKseed.z64"
     shutil.copy(rom_path, output_file)
     with open(output_file, "rb+") as rom:
         rom.seek(465825)
