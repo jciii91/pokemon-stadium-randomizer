@@ -16,6 +16,8 @@
 - [JDK](https://www.oracle.com/java/technologies/downloads/#jdk20-windows)
   - A couple testers had issues running the JAR file with only Java installed so I'm linking the JDK
   - I believe this should work with only Java installed, but maybe I built the JAR wrong
+- Emulator
+  - Project64 was not working for me. Been using RetroArch.
 
 ### Instructions
  - Download and launch pkStadiumRandomizer.jar
