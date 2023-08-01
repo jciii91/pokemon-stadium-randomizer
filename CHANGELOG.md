@@ -31,3 +31,8 @@ Randomizer for the N64 game Pokémon Stadium.
 	- Slot 3: A STA move
 	- Slot 4: Any of the 3 categories
  - possible bug in how the BSTs are being written after being randomized, needs investigation to confirm existence and cause
+
+1.0
+ - Rewrote everything in Java. Kept running into problems with anti-virus programs.
+ - Current supported ROM versions are USA 1.0 and 1.1
+ - Fixed the BST writing bug. Stats weren't being translated from bytes to ints correctly.
