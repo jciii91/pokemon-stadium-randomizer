@@ -21,6 +21,10 @@ import java.awt.datatransfer.DataFlavor;
 public class gui extends javax.swing.JFrame {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6215560251494821815L;
+	/**
      * Creates new form gui
      */
     public gui() {
@@ -48,7 +52,12 @@ public class gui extends javax.swing.JFrame {
         romLabel.setText("ROM:");
 
         romTextField.setDropTarget(new DropTarget() {
-            public synchronized void drop(DropTargetDropEvent evt) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 3462446948277791686L;
+
+			public synchronized void drop(DropTargetDropEvent evt) {
                 try {
                     evt.acceptDrop(DnDConstants.ACTION_COPY);
                     List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
@@ -64,7 +73,12 @@ public class gui extends javax.swing.JFrame {
         outputPathLabel.setText("Output Path:");
 
         outputPathTextField.setDropTarget(new DropTarget() {
-            public synchronized void drop(DropTargetDropEvent evt) {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = -2867499889902039996L;
+
+			public synchronized void drop(DropTargetDropEvent evt) {
                 try {
                     evt.acceptDrop(DnDConstants.ACTION_COPY);
                     List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
@@ -133,7 +147,7 @@ public class gui extends javax.swing.JFrame {
             pksRandomizer.Randomize();
         }
         catch (IOException ioe) {
-            System.out.println("IOException in Randomize().");
+            System.out.println("Randomization process canceled due to IOException.");
         }
     }//GEN-LAST:event_randomizeButtonActionPerformed
 
