@@ -36,3 +36,8 @@ Randomizer for the N64 game Pokémon Stadium.
  - Rewrote everything in Java. Kept running into problems with anti-virus programs.
  - Current supported ROM versions are USA 1.0 and 1.1
  - Fixed the BST writing bug. Stats weren't being translated from bytes to ints correctly.
+
+1.0.1
+ - Removed option from file copy that would allow for overwriting files of the same name.
+ - Added in try/catch blocks to the randomize class to better trace what's going on. Stack trace should print when an error is thrown.
+ - Using Gregorian time to add unique suffix to the end of seeds.
