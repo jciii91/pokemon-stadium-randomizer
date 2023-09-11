@@ -5,14 +5,16 @@
 package gui;
 
 import randomizer.randomizer;
+import util.incorrectROMExtensionException;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.File;
 import java.util.List;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DnDConstants;
 import java.awt.datatransfer.DataFlavor;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -45,12 +47,14 @@ public class gui extends javax.swing.JFrame {
         romTextField = new javax.swing.JTextField();
         outputPathTextField = new javax.swing.JTextField();
         randomizeButton = new javax.swing.JButton();
+        openROMButton = new javax.swing.JButton();
+        openOutputDirectoryButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(350, 150));
 
         romLabel.setText("ROM:");
-
+        
         romTextField.setDropTarget(new DropTarget() {
             /**
 			 * 
@@ -72,6 +76,10 @@ public class gui extends javax.swing.JFrame {
 
         outputPathLabel.setText("Output Path:");
 
+        romTextField.setToolTipText("<html>Path to ROM file, must be a .z64 file.<br><br>Example: C:\\User\\Files\\yourROM.z64</html>");
+
+        outputPathTextField.setToolTipText("<html>Path to the folder you want the seed to be created in.<br><br>Example: C:\\Users\\Folder\\Outputs</html>");
+        
         outputPathTextField.setDropTarget(new DropTarget() {
             /**
 			 * 
@@ -90,7 +98,7 @@ public class gui extends javax.swing.JFrame {
                 }
             }
         });
-
+        
         randomizeButton.setText("Randomize");
         randomizeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -98,29 +106,34 @@ public class gui extends javax.swing.JFrame {
             }
         });
 
+        openROMButton.setText("Open...");
+
+        openOutputDirectoryButton.setText("Open...");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(randomizeButton)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(romLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(romTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(outputPathLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(71, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(romLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(romTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(outputPathLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(outputPathTextField)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(randomizeButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(openOutputDirectoryButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(openROMButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {outputPathLabel, romLabel});
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {outputPathTextField, romTextField});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -128,14 +141,16 @@ public class gui extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(romLabel)
-                    .addComponent(romTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(romTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(openROMButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(outputPathLabel)
-                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(openOutputDirectoryButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(randomizeButton)
-                .addContainerGap(215, Short.MAX_VALUE))
+                .addContainerGap(209, Short.MAX_VALUE))
         );
 
         pack();
@@ -145,10 +160,18 @@ public class gui extends javax.swing.JFrame {
         randomizer pksRandomizer = new randomizer(romTextField.getText(), outputPathTextField.getText());
         try {
             pksRandomizer.Randomize();
+            JOptionPane.showMessageDialog(rootPane, "Seed created successfully.");
         }
         catch (IOException ioe) {
             System.out.println("Randomization process canceled due to IOException.");
+    		ioe.printStackTrace();
+            JOptionPane.showMessageDialog(rootPane, ioe.getMessage());
         }
+    	catch (incorrectROMExtensionException iree) {
+    		System.out.println("Randomization process canceled due to incorrectROMExtensionException.");
+    		iree.printStackTrace();
+            JOptionPane.showMessageDialog(rootPane, iree.getMessage());
+    	}
     }//GEN-LAST:event_randomizeButtonActionPerformed
 
     /**
@@ -187,6 +210,8 @@ public class gui extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton openOutputDirectoryButton;
+    private javax.swing.JButton openROMButton;
     private javax.swing.JLabel outputPathLabel;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JButton randomizeButton;
