@@ -14,6 +14,8 @@ import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DnDConstants;
 import java.awt.datatransfer.DataFlavor;
+
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 /**
@@ -75,10 +77,6 @@ public class gui extends javax.swing.JFrame {
         });
 
         outputPathLabel.setText("Output Path:");
-
-        romTextField.setToolTipText("<html>Path to ROM file, must be a .z64 file.<br><br>Example: C:\\User\\Files\\yourROM.z64</html>");
-
-        outputPathTextField.setToolTipText("<html>Path to the folder you want the seed to be created in.<br><br>Example: C:\\Users\\Folder\\Outputs</html>");
         
         outputPathTextField.setDropTarget(new DropTarget() {
             /**
@@ -98,7 +96,10 @@ public class gui extends javax.swing.JFrame {
                 }
             }
         });
-        
+
+        romTextField.setToolTipText("Path to ROM file, must be a .z64 file.\n\nExample: C:\\User\\Files\\yourROM.z64");
+        outputPathTextField.setToolTipText("Path to the folder you want the seed to be created in.\n\nExample: C:\\Users\\Folder\\Outputs");
+
         randomizeButton.setText("Randomize");
         randomizeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -107,8 +108,18 @@ public class gui extends javax.swing.JFrame {
         });
 
         openROMButton.setText("Open...");
+        openROMButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openROMButtonActionPerformed(evt);
+            }
+        });
 
         openOutputDirectoryButton.setText("Open...");
+        openOutputDirectoryButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openOutputDirectoryButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -173,6 +184,25 @@ public class gui extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, iree.getMessage());
     	}
     }//GEN-LAST:event_randomizeButtonActionPerformed
+
+    private void openROMButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openROMButtonActionPerformed
+    	final JFileChooser fc = new JFileChooser();
+    	int returnVal = fc.showOpenDialog(rootPane);
+    	if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            romTextField.setText(file.getAbsolutePath());    
+    	}
+    }//GEN-LAST:event_openROMButtonActionPerformed
+
+    private void openOutputDirectoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openOutputDirectoryButtonActionPerformed
+    	final JFileChooser fc = new JFileChooser();
+    	fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    	int returnVal = fc.showOpenDialog(rootPane);
+    	if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            outputPathTextField.setText(file.getAbsolutePath());    
+    	}
+    }//GEN-LAST:event_openOutputDirectoryButtonActionPerformed
 
     /**
      * @param args the command line arguments
