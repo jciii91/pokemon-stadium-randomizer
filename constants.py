@@ -1,3 +1,13 @@
+rom_offsets = {
+    "US_1.0" : {
+        "BaseStats" : 465825,
+        "Rental_GymCastle_Round1_Pointer" : 9011696,
+        "GymCastle_Round1": 9057228,
+        "Rentals_GymCastle_Round1" : 9119629,
+        "EmptyRomSpace" : 33472592
+    }
+}
+
 kanto_dex_names = [
     {"name": "BULBASAUR", "type": "1603", "exp": "117360"},
     {"name": "IVYSAUR", "type": "1603", "exp": "117360"},

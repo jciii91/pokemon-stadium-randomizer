@@ -45,6 +45,10 @@ def randomizer_func(rom_path, output_file, settings_dict):
                 rom.write(randomized_base_stats)
                 rom.seek(18, 1)
 
+        # change pointer for gym castle round 1 rentals to custom table
+        rom.seek(constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"])
+        rom.write(bytes.fromhex("0175405000003200")) # write new offset and new table size
+
         # randomize round 1 gym castle Pokémon
         rom.seek(9057228)
         for q in range(0, 10):
@@ -99,8 +103,16 @@ def randomizer_func(rom_path, output_file, settings_dict):
             rom.seek(16, 1)
 
         # randomize gym castle rentals
-        rom.seek(9119629)
-        for j in range(0, 149):
+        rom.seek(33472592)
+        rom.write(bytes.fromhex("00000097")) # write expected number of returned mons
+        for j in range(0, 151):
+            rom.write(int.to_bytes(j + 1, 1, "big")) # Dex number
+            rom.write(bytes.fromhex("00"))
+            rom.write(bytes.fromhex("0080")) # data crystal says this is "current HP" - idk what that means so I'm making it static for now
+            rom.write(bytes.fromhex("32")) # level
+            rom.write(bytes.fromhex("00")) # status
+            rom.write(bytes.fromhex(constants.kanto_dex_names[j]["type"])) # type(s)
+            rom.write(bytes.fromhex("00"))
             # randomize moveset unless setting is 'Vanilla'
             if attack_rando_factor > 0:
                 new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], attack_rando_factor)
@@ -109,18 +121,26 @@ def randomizer_func(rom_path, output_file, settings_dict):
                     new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
                 rom.write(new_attacks_bytearray)
             else:
-                rom.seek(4,1)
+                rom.seek(4,1) # thinking I need to write something to store the vanilla moves
 
-            rom.seek(7, 1)
+            rom.write(bytes.fromhex("00"))
+            rom.write(bytes.fromhex("1110")) # trainer ID - doesn't matter (probably)
+            rom.write(bytes.fromhex("00"))
+            rom.write(int.to_bytes(int(constants.kanto_dex_names[j]["exp"]), 3, "big")) # experience
+            
             for k in range(0, 5):
                 ev = int.to_bytes(evs[j][k], 2, "big")
                 rom.write(ev)
             rom.write(bytes.fromhex(ivs[j]))
 
-            rom.seek(6, 1)
+            rom.seek(4, 1) # skip PP writing for now, not sure what it does
+            rom.write(bytes.fromhex("32")) # level again for some reason
+            rom.write(bytes.fromhex("00"))
             disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
             rom.write(disp)
-            rom.seek(45, 1)
+            rom.write(constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')) # name
+            rom.write(bytes.fromhex("52414E444F000000")) # trainer name (RANDO)
+            rom.write(bytes.fromhex("0000000000000000000000000000000000"))
 
     n64_cs = n64Checksum.CheckSum(exe_path, output_file)
     n64_cs.call_subprocess()
