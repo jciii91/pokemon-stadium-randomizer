@@ -1,15 +1,12 @@
 import random
-import shutil
 
 import constants
 import util
-import n64Checksum
 import randomizePokemonBaseValues
 import randomMovesetGenerator
 import writeDisplayData
 
-def randomizer_func(rom_path, output_file, settings_dict):
-    exe_path = "n64-checksum.exe"
+def randomizer_func(rom, settings_dict):
     base_rando_factor = int(settings_dict['base'])
     attack_rando_factor = int(settings_dict['attack'])
 
@@ -23,128 +20,202 @@ def randomizer_func(rom_path, output_file, settings_dict):
         evs.append(util.Util.random_int_set(0, 65535, 5))
         ivs.append(util.Util.random_string_hex(4))
 
-    shutil.copy(rom_path, output_file)
-    with open(output_file, "rb+") as rom:
-        # disable checksum
-        rom.seek(constants.rom_offsets["US_1.0"]["CheckSum1"])
-        rom.write(bytes.fromhex("3C1C8041")) # instead of NOP, assign address to GP register for later use
+    # disable checksum
+    print("Disabling checksum...")
+    offset = constants.rom_offsets["US_1.0"]["CheckSum1"]
+    new_bytes = bytes.fromhex("3C1C8041")
+    rom[offset:offset + len(new_bytes)] = new_bytes
 
-        rom.seek(constants.rom_offsets["US_1.0"]["CheckSum2"])
-        rom.write(bytes.fromhex("00000000"))
-        
-        # randomize base stats, unless setting set to 'Vanilla'
-        rom.seek(465825)
-        if base_rando_factor > 0:
-            for i in range(0, 151):
-                stats = bytearray(rom.read(5))
-                rom.seek(-5, 1)
-                randomizer.set_original_stats(stats)
-                randomized_base_stats = randomizer.randomize_stats()
+    offset = constants.rom_offsets["US_1.0"]["CheckSum2"]
+    new_bytes = bytes.fromhex("00000000")
+    rom[offset:offset + len(new_bytes)] = new_bytes
+    
+    # randomize base stats, unless setting set to 'Vanilla'
+    print("Randomizing base stats...")
+    offset = constants.rom_offsets["US_1.0"]["BaseStats"]
+    if base_rando_factor > 0:
+        for i in range(151):
+            stats = rom[offset:offset + 5]  # Read 5 bytes
+            randomizer.set_original_stats(stats)
+            randomized_base_stats = randomizer.randomize_stats()
 
-                bst_str = randomized_base_stats.hex()
-                bst = []
-                for offset in range(0, 5):
-                    index = offset * 2
-                    bst.append(int(bst_str[index:index + 2], 16))
-                bst_list.append(bst)
+            # Convert to list of integers for BST processing
+            bst_list.append(list(randomized_base_stats))
 
-                new_display_stats.append(randomized_base_stats)
-                rom.write(randomized_base_stats)
-                rom.seek(18, 1)
+            # Store modified stats for display
+            new_display_stats.append(randomized_base_stats)
 
-        # change pointer for gym castle round 1 rentals to custom table
-        rom.seek(constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"])
-        rom.write(bytes.fromhex("0175405000003200")) # write new offset and new table size
+            # Write the new randomized stats back
+            rom[offset:offset + 5] = randomized_base_stats
 
-        # randomize round 1 gym castle Pokémon
-        rom.seek(9057228)
-        for q in range(0, 10):
-            team_count = 4 if q < 9 else 7
-            for r in range(0, team_count):
-                new_team = random.sample(range(0, 149), 6)
-                for s in range(0, 6):
-                    pokedex_num = new_team[s]
-                    rom.write(int.to_bytes(pokedex_num + 1, 1, "big"))
-                    rom.seek(5, 1)
-                    new_type = constants.kanto_dex_names[pokedex_num]["type"]
-                    rom.write(bytes.fromhex(new_type))
+            # Move to the next Pokémon entry (skip 18 additional bytes)
+            offset += 23
 
-                    rom.seek(1, 1)
-                    # randomize moveset unless setting is 'Vanilla'
-                    if attack_rando_factor > 0:
-                        new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], attack_rando_factor)
-                        new_attacks_bytearray = bytearray()
-                        for attack in new_attacks:
-                            new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
-                        rom.write(new_attacks_bytearray)
-                    else:
-                        rom.seek(4,1)
+    # change pointer for gym castle round 1 rentals to custom table
+    print("Redirecting pointer...")
+    offset = constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"]
+    new_bytes = bytes.fromhex("0175405000003200") # write new offset and new table size
+    rom[offset:offset + len(new_bytes)] = new_bytes
 
-                    rom.seek(4, 1)
-                    exp = int.to_bytes(int(constants.kanto_dex_names[pokedex_num]["exp"]), 3, "big")
-                    rom.write(exp)
-                    for t in range(0, 5):
-                        ev = int.to_bytes(evs[pokedex_num][t], 2, "big")
-                        rom.write(ev)
-                    rom.write(bytes.fromhex(ivs[pokedex_num]))
+    # randomize round 1 gym castle Pokémon
+    print("Randomizing round 1 gym castle...")
+    offset = constants.rom_offsets["US_1.0"]["GymCastle_Round1"]
+    for q in range(10):
+        team_count = 4 if q < 9 else 7
+        for r in range(team_count):
+            new_team = random.sample(range(149), 6)
+            for s in range(6):
+                pokedex_num = new_team[s]
+                rom[offset] = pokedex_num + 1  # Write Pokémon index
+                offset += 1
 
-                    rom.seek(6, 1)
-                    disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[pokedex_num], evs[pokedex_num], ivs[pokedex_num])
-                    rom.write(disp)
+                offset += 5  # Seek forward by 5 bytes
 
-                    pokemon_name = constants.kanto_dex_names[pokedex_num]["name"]
-                    rom.write(pokemon_name.encode())
-                    # check if a Nidoran is being written in to add their gender symbol
-                    if pokedex_num == 28:
-                        rom.write(bytes.fromhex("BE"))
-                        pokemon_name = pokemon_name + " "
-                    elif pokedex_num == 31:
-                        rom.write(bytes.fromhex("A9"))
-                        pokemon_name = pokemon_name + " "
-                    if len(pokemon_name) < 10:
-                        blanks = 10 - len(pokemon_name)
-                        for blank in range(0, blanks):
-                            rom.write(bytes.fromhex("00"))
-                    rom.seek(26, 1)
-                rom.seek(56, 1)
-            rom.seek(16, 1)
+                new_type = bytes.fromhex(constants.kanto_dex_names[pokedex_num]["type"])
+                rom[offset:offset + len(new_type)] = new_type  # Write Pokémon type
+                offset += len(new_type)
 
-        # randomize gym castle rentals
-        rom.seek(33472592)
-        rom.write(bytes.fromhex("00000097")) # write expected number of returned mons
-        for j in range(0, 151):
-            rom.write(int.to_bytes(j + 1, 1, "big")) # Dex number
-            rom.write(bytes.fromhex("00"))
-            rom.write(bytes.fromhex("0080")) # data crystal says this is "current HP" - idk what that means so I'm making it static for now
-            rom.write(bytes.fromhex("32")) # level
-            rom.write(bytes.fromhex("00")) # status
-            rom.write(bytes.fromhex(constants.kanto_dex_names[j]["type"])) # type(s)
-            rom.write(bytes.fromhex("00"))
-            # randomize moveset unless setting is 'Vanilla'
-            if attack_rando_factor > 0:
-                new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], attack_rando_factor)
-                new_attacks_bytearray = bytearray()
-                for attack in new_attacks:
-                    new_attacks_bytearray.extend(int.to_bytes(attack, 1, "big"))
-                rom.write(new_attacks_bytearray)
-            else:
-                rom.seek(4,1) # thinking I need to write something to store the vanilla moves
+                offset += 1  # Seek forward by 1 byte
 
-            rom.write(bytes.fromhex("00"))
-            rom.write(bytes.fromhex("1110")) # trainer ID - doesn't matter (probably)
-            rom.write(bytes.fromhex("00"))
-            rom.write(int.to_bytes(int(constants.kanto_dex_names[j]["exp"]), 3, "big")) # experience
-            
-            for k in range(0, 5):
-                ev = int.to_bytes(evs[j][k], 2, "big")
-                rom.write(ev)
-            rom.write(bytes.fromhex(ivs[j]))
+                # Randomize moveset unless setting is 'Vanilla'
+                if attack_rando_factor > 0:
+                    new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], attack_rando_factor)
+                    for attack in new_attacks:
+                        rom[offset] = attack
+                        offset += 1
+                else:
+                    offset += 4  # Seek forward by 4 bytes
 
-            rom.seek(4, 1) # skip PP writing for now, not sure what it does
-            rom.write(bytes.fromhex("32")) # level again for some reason
-            rom.write(bytes.fromhex("00"))
-            disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
-            rom.write(disp)
-            rom.write(constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')) # name
-            rom.write(bytes.fromhex("52414E444F000000")) # trainer name (RANDO)
-            rom.write(bytes.fromhex("0000000000000000000000000000000000"))
+                offset += 4  # Seek forward by 4 bytes
+
+                exp = int.to_bytes(int(constants.kanto_dex_names[pokedex_num]["exp"]), 3, "big")
+                rom[offset:offset + 3] = exp
+                offset += 3
+
+                for t in range(5):
+                    ev = int.to_bytes(evs[pokedex_num][t], 2, "big")
+                    rom[offset:offset + 2] = ev
+                    offset += 2
+
+                ivs_bytes = bytes.fromhex(ivs[pokedex_num])
+                rom[offset:offset + len(ivs_bytes)] = ivs_bytes
+                offset += len(ivs_bytes)
+
+                offset += 6  # Seek forward by 6 bytes
+
+                disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(
+                    new_display_stats[pokedex_num], evs[pokedex_num], ivs[pokedex_num]
+                )
+                rom[offset:offset + len(disp)] = disp
+                offset += len(disp)
+
+                pokemon_name = constants.kanto_dex_names[pokedex_num]["name"].encode()
+                rom[offset:offset + len(pokemon_name)] = pokemon_name
+                offset += len(pokemon_name)
+
+                # Check if a Nidoran is being written in to add their gender symbol
+                if pokedex_num == 28:
+                    rom[offset:offset + 1] = bytes.fromhex("BE")  # Female symbol
+                    offset += 1
+                    pokemon_name += b" "
+                elif pokedex_num == 31:
+                    rom[offset:offset + 1] = bytes.fromhex("A9")  # Male symbol
+                    offset += 1
+                    pokemon_name += b" "
+
+                # Fill in blank spaces to make the name 11 bytes long
+                if len(pokemon_name) < 11:
+                    blanks = 11 - len(pokemon_name)
+                    rom[offset:offset + blanks] = b"\x00" * blanks
+                    offset += blanks
+
+                offset += 25  # Seek forward by 25 bytes
+            offset += 56  # Seek forward by 56 bytes
+        offset += 16  # Seek forward by 16 bytes
+
+    # randomize gym castle rentals
+    print("Randomizing round 1 gym castle rentals...")
+    offset = constants.rom_offsets["US_1.0"]["EmptyRomSpace"]
+
+    # Write expected number of returned Pokémon
+    rom[offset:offset + 4] = bytes.fromhex("00000097")
+    offset += 4
+
+    for j in range(151):
+        rom[offset] = j + 1  # Write Dex number
+        offset += 1
+
+        rom[offset:offset + 1] = bytes.fromhex("00")
+        offset += 1
+
+        rom[offset:offset + 2] = bytes.fromhex("0080")  # "Current HP"
+        offset += 2
+
+        rom[offset:offset + 1] = bytes.fromhex("32")  # Level
+        offset += 1
+
+        rom[offset:offset + 1] = bytes.fromhex("00")  # Status
+        offset += 1
+
+        rom[offset:offset + 2] = bytes.fromhex(constants.kanto_dex_names[j]["type"])  # Type(s)
+        offset += 2
+
+        rom[offset:offset + 1] = bytes.fromhex("00")
+        offset += 1
+
+        # Randomize moveset unless setting is 'Vanilla'
+        if attack_rando_factor > 0:
+            new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], attack_rando_factor)
+            for attack in new_attacks:
+                rom[offset] = attack
+                offset += 1
+        else:
+            rom[offset:offset + 4] = bytes.fromhex("00000000")  # Placeholder for vanilla moves
+            offset += 4
+
+        rom[offset:offset + 1] = bytes.fromhex("00")
+        offset += 1
+
+        rom[offset:offset + 2] = bytes.fromhex("1110")  # Trainer ID
+        offset += 2
+
+        rom[offset:offset + 1] = bytes.fromhex("00")
+        offset += 1
+
+        exp_bytes = int.to_bytes(int(constants.kanto_dex_names[j]["exp"]), 3, "big")
+        rom[offset:offset + 3] = exp_bytes  # Experience
+        offset += 3
+
+        for k in range(5):
+            ev = int.to_bytes(evs[j][k], 2, "big")
+            rom[offset:offset + 2] = ev
+            offset += 2
+
+        ivs_bytes = bytes.fromhex(ivs[j])
+        rom[offset:offset + len(ivs_bytes)] = ivs_bytes
+        offset += len(ivs_bytes)
+
+        rom[offset:offset + 4] = bytes.fromhex("00000000")
+        offset += 4  # I think setting these to 0 gives you the vanilla PP for moves
+
+        rom[offset:offset + 1] = bytes.fromhex("32")  # Level again
+        offset += 1
+
+        rom[offset:offset + 1] = bytes.fromhex("00")
+        offset += 1
+
+        disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
+        rom[offset:offset + len(disp)] = disp
+        offset += len(disp)
+
+        pokemon_name = constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')
+        rom[offset:offset + 11] = pokemon_name  # Name
+        offset += 11
+
+        rom[offset:offset + 8] = bytes.fromhex("52414E444F000000")  # Trainer name (RANDO)
+        offset += 8
+
+        rom[offset:offset + 17] = bytes.fromhex("0000000000000000000000000000000000")  # Padding
+        offset += 17
+
+    return rom
