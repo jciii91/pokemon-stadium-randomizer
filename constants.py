@@ -1,5 +1,7 @@
 rom_offsets = {
     "US_1.0" : {
+        "CheckSum1" : 1596,
+        "CheckSum2" : 1608,
         "BaseStats" : 465825,
         "Rental_GymCastle_Round1_Pointer" : 9011696,
         "GymCastle_Round1": 9057228,

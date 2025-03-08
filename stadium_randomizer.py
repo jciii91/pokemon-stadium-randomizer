@@ -25,6 +25,13 @@ def randomizer_func(rom_path, output_file, settings_dict):
 
     shutil.copy(rom_path, output_file)
     with open(output_file, "rb+") as rom:
+        # disable checksum
+        rom.seek(constants.rom_offsets["US_1.0"]["CheckSum1"])
+        rom.write(bytes.fromhex("3C1C8041")) # instead of NOP, assign address to GP register for later use
+
+        rom.seek(constants.rom_offsets["US_1.0"]["CheckSum2"])
+        rom.write(bytes.fromhex("00000000"))
+        
         # randomize base stats, unless setting set to 'Vanilla'
         rom.seek(465825)
         if base_rando_factor > 0:
@@ -141,6 +148,3 @@ def randomizer_func(rom_path, output_file, settings_dict):
             rom.write(constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')) # name
             rom.write(bytes.fromhex("52414E444F000000")) # trainer name (RANDO)
             rom.write(bytes.fromhex("0000000000000000000000000000000000"))
-
-    n64_cs = n64Checksum.CheckSum(exe_path, output_file)
-    n64_cs.call_subprocess()
