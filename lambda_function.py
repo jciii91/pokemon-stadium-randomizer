@@ -2,10 +2,11 @@ import json
 
 def lambda_handler(event, context):
     
-    slider1 = event.get("slider1")
-    slider2 = event.get("slider2")
-    slider3 = event.get("slider3")
-    seedCount = event.get("seedCount")
+    body = json.loads(event.get("body", "{}"))
+    slider1 = body.get("slider1")
+    slider2 = body.get("slider2")
+    slider3 = body.get("slider3")
+    seedCount = body.get("seedCount")
 
     return {
         "statusCode": 200,
