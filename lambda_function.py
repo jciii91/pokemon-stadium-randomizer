@@ -16,6 +16,9 @@ def file_exists(bucket_name, target_file):
 
 def lambda_handler(event, context):
     body = json.loads(event.get("body", "{}"))
+    slider1 = int(body.get("slider1", "1"))
+    slider2 = int(body.get("slider2", "1"))
+    slider3 = int(body.get("slider3", "1"))
     file_name = body.get("fileName", "") + ".z64"
     bucket_name = os.environ["BUCKET_NAME"]
     new_file_name = "new-seed.z64"
@@ -25,8 +28,9 @@ def lambda_handler(event, context):
         file_data = bytearray(response['Body'].read())
 
         settings_dict = {
-            "base" : 1,
-            "attack" : 1
+            "base_stats" : slider1,
+            "rentals_round1" : slider2,
+            "gymcastle_round1" : slider3
         }
         
         new_rom = stadium_randomizer.randomizer_func(file_data, settings_dict)

@@ -73,9 +73,9 @@ kanto_dex_names = [
     {"name": "POLIWAG", "type": "1515", "exp": "117360"},
     {"name": "POLIWHIRL", "type": "1515", "exp": "117360"},
     {"name": "POLIWRATH", "type": "1501", "exp": "117360"},
-    {"name": "ABRA", "type": "0703", "exp": "117360"},
-    {"name": "KADABRA", "type": "0703", "exp": "117360"},
-    {"name": "ALAKAZAM", "type": "0703", "exp": "117360"},
+    {"name": "ABRA", "type": "1818", "exp": "117360"},
+    {"name": "KADABRA", "type": "1818", "exp": "117360"},
+    {"name": "ALAKAZAM", "type": "1818", "exp": "117360"},
     {"name": "MACHOP", "type": "0101", "exp": "117360"},
     {"name": "MACHOKE", "type": "0101", "exp": "117360"},
     {"name": "MACHAMP", "type": "0101", "exp": "117360"},
@@ -188,10 +188,20 @@ kanto_attack_dict = {
     "STA7": [18, 46, 100, 150]
 }
 
+# random number rolling boundaries for picking a move bucket
+# lower BSTs are weighted towards the left, which should give weaker mons better moves on average
+# as you go up in BST teir, the weights shift to the right towards a tendancy for weaker moves
 stat_distribution_list = [
     [16.5, 38, 54.5, 68, 79.5, 90, 100],
     [13.5, 29, 48, 63.5, 77, 89, 100],
     [12, 25, 40.5, 59.5, 75, 88, 100],
     [11, 23, 36.5, 52, 71, 86.5, 100],
     [10, 20.5, 32, 45.5, 62, 83.5, 100]
+]
+
+bst_weights = [
+    [100, 100, 100, 100, 100], # uniform distribution
+    [200, 150, 80, 50, 20], # weight one side
+    [180, 80, 80, 80, 80], # heavily weight one stat
+    [160, 50, 150, 90, 50] # random bursts 
 ]

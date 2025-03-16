@@ -7,10 +7,11 @@ import randomMovesetGenerator
 import writeDisplayData
 
 def randomizer_func(rom, settings_dict):
-    base_rando_factor = int(settings_dict['base'])
-    attack_rando_factor = int(settings_dict['attack'])
+    setting_base_stats = int(settings_dict['base_stats'])
+    setting_rentals_round1 = int(settings_dict['rentals_round1'])
+    setting_gymcastle_round1 = int(settings_dict['gymcastle_round1'])
 
-    randomizer = randomizePokemonBaseValues.BaseValuesRandomizer(base_rando_factor)
+    randomizer = randomizePokemonBaseValues.BaseValuesRandomizer(setting_base_stats)
 
     new_display_stats = []
     bst_list = []
@@ -33,7 +34,7 @@ def randomizer_func(rom, settings_dict):
     # randomize base stats, unless setting set to 'Vanilla'
     print("Randomizing base stats...")
     offset = constants.rom_offsets["US_1.0"]["BaseStats"]
-    if base_rando_factor > 0:
+    if setting_base_stats > 0:
         for i in range(151):
             stats = rom[offset:offset + 5]  # Read 5 bytes
             randomizer.set_original_stats(stats)
@@ -78,8 +79,8 @@ def randomizer_func(rom, settings_dict):
                 offset += 1  # Seek forward by 1 byte
 
                 # Randomize moveset unless setting is 'Vanilla'
-                if attack_rando_factor > 0:
-                    new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], attack_rando_factor)
+                if setting_gymcastle_round1 > 0:
+                    new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], setting_gymcastle_round1)
                     for attack in new_attacks:
                         rom[offset] = attack
                         offset += 1
@@ -164,8 +165,8 @@ def randomizer_func(rom, settings_dict):
         offset += 1
 
         # Randomize moveset unless setting is 'Vanilla'
-        if attack_rando_factor > 0:
-            new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], attack_rando_factor)
+        if setting_rentals_round1 > 0:
+            new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], setting_rentals_round1)
             for attack in new_attacks:
                 rom[offset] = attack
                 offset += 1

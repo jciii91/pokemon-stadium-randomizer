@@ -1,28 +1,24 @@
 import random
-import math
-
-# [HP, ATK, DEF, SPD, SPC]
-# global base stat constants (units are %)
-# example shown here is default settings
-# MIN_BASE_PERCENT = [15, 15, 15, 15, 15]
-# MAX_BASE_PERCENT = [43, 43, 43, 43, 43]
-
+import constants
 
 class BaseValuesRandomizer:
     def __init__(self, rando_factor):
+        self.min_val = 20
+        self.max_val = 235
         self.stats = bytearray()
-        if (rando_factor == 2):
-            self.MIN_BASE_PERCENT = [5, 5, 5, 5, 5]
-            self.MAX_BASE_PERCENT = [53, 53, 53, 53, 53]
-        elif (rando_factor == 3):
-            self.MIN_BASE_PERCENT = [1, 1, 1, 1, 1]
-            self.MAX_BASE_PERCENT = [96, 96, 96, 96, 96]
-        else:
-            self.MIN_BASE_PERCENT = [15, 15, 15, 15, 15]
-            self.MAX_BASE_PERCENT = [43, 43, 43, 43, 43]
+        self.rando_factor = rando_factor
 
     def set_original_stats(self, stats_array):
         self.stats = stats_array
+
+    def select_index(self):
+        weight_map = {
+            1: constants.bst_weights[0] if random.random() < 0.5 else constants.bst_weights[1],
+            2: constants.bst_weights[2],
+            3: constants.bst_weights[3]
+        }
+        
+        return random.choices([0, 1, 2, 3, 4], weights=weight_map.get(self.rando_factor, constants.bst_weights[0]))[0]
 
     def randomize_stats(self):
         bst_list = []
@@ -31,27 +27,23 @@ class BaseValuesRandomizer:
         bst = sum(bst_list)
         new_stats_bytes = bytearray()
 
-        while True:
-            new_stats = [0, 0, 0, 0, 0]
-            remaining_percentage = 100
-            for i in range(0, 4):
-                if remaining_percentage > self.MIN_BASE_PERCENT[i]:
-                    if remaining_percentage < self.MAX_BASE_PERCENT[i]:
-                        bst_percentage = random.randrange(self.MIN_BASE_PERCENT[i], remaining_percentage)
-                    else:
-                        bst_percentage = random.randrange(self.MIN_BASE_PERCENT[i], self.MAX_BASE_PERCENT[i])
-                else:
-                    bst_percentage = self.MIN_BASE_PERCENT[i]
-                new_stats[i] = math.floor(bst * (bst_percentage/100))
-                remaining_percentage = remaining_percentage - bst_percentage
+        # Start with an array of 5 numbers, all at the minimum value
+        new_stats = [self.min_val] * 5
+        current_sum = sum(new_stats)
 
-            # check that the remaining percentage of BST to be assigned falls within the randomizer settings
-            if self.MAX_BASE_PERCENT[4] >= remaining_percentage >= self.MIN_BASE_PERCENT[4]:
-                new_stats[4] = bst - sum(new_stats)
-            
-            # if all new stats are between the inclusive limits of 1 and 255 then move on
-            if not(any(isinstance(x, int) and x > 255 for x in new_stats) or any(isinstance(x, int) and x < 1 for x in new_stats)):
-                break
+        # Increment numbers until we reach BST
+        while current_sum < bst:
+            # Randomly select an index to increase
+            idx = self.select_index()
+
+            # Only increase if it won't exceed max_val
+            if new_stats[idx] < self.max_val:
+                new_stats[idx] += 1
+                current_sum += 1
+            else:
+                # Check if all numbers are maxed out (should never happen with correct BST input)
+                if all(n == self.max_val for n in new_stats):
+                    raise RuntimeError("All stats reached max_val but BST is not yet met. Something went wrong!")
 
         random.shuffle(new_stats)
         for stat in new_stats:
