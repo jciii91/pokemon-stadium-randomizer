@@ -2,11 +2,12 @@ import stadium_randomizer
 
 def main():
     settings_dict = {
-        "base_stats" : 3,
-        "rentals_round1" : 3,
-        "gymcastle_round1" : 3
+        "version" : 'PAL_1.1',
+        "base_stats" : 1,
+        "rentals_round1" : 1,
+        "gymcastle_round1" : 1
     }
-    with open("C:\\Users\\jcost\\Documents\\games\\PKStadium1-0US.z64", "rb") as file:
+    with open("C:\\Users\\jcost\\Documents\\games\\PKStadium1-1.z64", "rb") as file:
         binary_data = bytearray(file.read())
 
     rom = stadium_randomizer.randomizer_func(binary_data, settings_dict)

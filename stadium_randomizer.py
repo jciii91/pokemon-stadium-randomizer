@@ -7,6 +7,7 @@ import randomMovesetGenerator
 import writeDisplayData
 
 def randomizer_func(rom, settings_dict):
+    setting_version = settings_dict['version']
     setting_base_stats = settings_dict['base_stats']
     setting_rentals_round1 = settings_dict['rentals_round1']
     setting_gymcastle_round1 = settings_dict['gymcastle_round1']
@@ -23,18 +24,18 @@ def randomizer_func(rom, settings_dict):
 
     # disable checksum
     print("Disabling checksum...")
-    offset = constants.rom_offsets["US_1.0"]["CheckSum1"]
+    offset = constants.rom_offsets[setting_version]["CheckSum1"]
     new_bytes = bytes.fromhex("3C1C8041")
     rom[offset:offset + len(new_bytes)] = new_bytes
 
-    offset = constants.rom_offsets["US_1.0"]["CheckSum2"]
+    offset = constants.rom_offsets[setting_version]["CheckSum2"]
     new_bytes = bytes.fromhex("00000000")
     rom[offset:offset + len(new_bytes)] = new_bytes
     
     # randomize base stats, unless setting set to 'Vanilla'
     if setting_base_stats > 0:
         print("Randomizing base stats...")
-        offset = constants.rom_offsets["US_1.0"]["BaseStats"]
+        offset = constants.rom_offsets[setting_version]["BaseStats"]
         for _ in range(151):
             stats = rom[offset:offset + 5]  # Read 5 bytes
             randomizer.set_original_stats(stats)
@@ -55,14 +56,14 @@ def randomizer_func(rom, settings_dict):
     # change pointer for gym castle round 1 rentals to custom table
     if setting_gymcastle_round1 > 0:
         print("Redirecting round 1 rental table pointer...")
-        offset = constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"]
-        new_bytes = bytes.fromhex("0175405000003200") # write new offset and new table size
+        offset = constants.rom_offsets[setting_version]["Rental_GymCastle_Round1_Pointer"]
+        new_bytes = bytes.fromhex(constants.rom_offsets[setting_version]["OffsetToNewTable"]) # write new offset and new table size
         rom[offset:offset + len(new_bytes)] = new_bytes
 
     # randomize round 1 gym castle Pokémon
     if setting_gymcastle_round1 > 0:
         print("Randomizing round 1 gym castle trainers...")
-        offset = constants.rom_offsets["US_1.0"]["GymCastle_Round1"]
+        offset = constants.rom_offsets[setting_version]["GymCastle_Round1"]
         for q in range(10):
             team_count = 4 if q < 9 else 7
             for r in range(team_count):
@@ -136,7 +137,7 @@ def randomizer_func(rom, settings_dict):
     # randomize gym castle rentals
     if setting_rentals_round1 > 0:
         print("Randomizing round 1 gym castle rentals...")
-        offset = constants.rom_offsets["US_1.0"]["EmptyRomSpace"]
+        offset = constants.rom_offsets[setting_version]["EmptyRomSpace"]
 
         # Write expected number of returned Pokémon
         rom[offset:offset + 4] = bytes.fromhex("00000097")

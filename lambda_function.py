@@ -19,6 +19,7 @@ def lambda_handler(event, context):
     slider1 = int(body.get("slider1", "1"))
     slider2 = int(body.get("slider2", "1"))
     slider3 = int(body.get("slider3", "1"))
+    version = body.get("version", "PAL_1.1") # default to PAL since it seems more common
     file_name = body.get("fileName", "") + ".z64"
     bucket_name = os.environ["BUCKET_NAME"]
     new_file_name = "new-seed.z64"
@@ -28,6 +29,7 @@ def lambda_handler(event, context):
         file_data = bytearray(response['Body'].read())
 
         settings_dict = {
+            "version" : version,
             "base_stats" : slider1,
             "rentals_round1" : slider2,
             "gymcastle_round1" : slider3

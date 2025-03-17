@@ -5,8 +5,17 @@ rom_offsets = {
         "BaseStats" : 465825,
         "Rental_GymCastle_Round1_Pointer" : 9011696,
         "GymCastle_Round1": 9057228,
-        "Rentals_GymCastle_Round1" : 9119629,
-        "EmptyRomSpace" : 33472592
+        "EmptyRomSpace" : 33472592,
+        "OffsetToNewTable" : "0175405000003200"
+    },
+    "PAL_1.1" : {
+        "CheckSum1" : 1596,
+        "CheckSum2" : 1608,
+        "BaseStats" : 466337,
+        "Rental_GymCastle_Round1_Pointer" : 8872432,
+        "GymCastle_Round1": 8917964,
+        "EmptyRomSpace" : 33301456,
+        "OffsetToNewTable" : "0174C3D000003200"
     }
 }
 
