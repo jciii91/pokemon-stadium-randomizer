@@ -7,9 +7,9 @@ import randomMovesetGenerator
 import writeDisplayData
 
 def randomizer_func(rom, settings_dict):
-    setting_base_stats = int(settings_dict['base_stats'])
-    setting_rentals_round1 = int(settings_dict['rentals_round1'])
-    setting_gymcastle_round1 = int(settings_dict['gymcastle_round1'])
+    setting_base_stats = settings_dict['base_stats']
+    setting_rentals_round1 = settings_dict['rentals_round1']
+    setting_gymcastle_round1 = settings_dict['gymcastle_round1']
 
     randomizer = randomizePokemonBaseValues.BaseValuesRandomizer(setting_base_stats)
 
@@ -32,10 +32,10 @@ def randomizer_func(rom, settings_dict):
     rom[offset:offset + len(new_bytes)] = new_bytes
     
     # randomize base stats, unless setting set to 'Vanilla'
-    print("Randomizing base stats...")
-    offset = constants.rom_offsets["US_1.0"]["BaseStats"]
     if setting_base_stats > 0:
-        for i in range(151):
+        print("Randomizing base stats...")
+        offset = constants.rom_offsets["US_1.0"]["BaseStats"]
+        for _ in range(151):
             stats = rom[offset:offset + 5]  # Read 5 bytes
             randomizer.set_original_stats(stats)
             randomized_base_stats = randomizer.randomize_stats()
@@ -53,170 +53,167 @@ def randomizer_func(rom, settings_dict):
             offset += 23
 
     # change pointer for gym castle round 1 rentals to custom table
-    print("Redirecting pointer...")
-    offset = constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"]
-    new_bytes = bytes.fromhex("0175405000003200") # write new offset and new table size
-    rom[offset:offset + len(new_bytes)] = new_bytes
+    if setting_gymcastle_round1 > 0:
+        print("Redirecting round 1 rental table pointer...")
+        offset = constants.rom_offsets["US_1.0"]["Rental_GymCastle_Round1_Pointer"]
+        new_bytes = bytes.fromhex("0175405000003200") # write new offset and new table size
+        rom[offset:offset + len(new_bytes)] = new_bytes
 
     # randomize round 1 gym castle Pokémon
-    print("Randomizing round 1 gym castle...")
-    offset = constants.rom_offsets["US_1.0"]["GymCastle_Round1"]
-    for q in range(10):
-        team_count = 4 if q < 9 else 7
-        for r in range(team_count):
-            new_team = random.sample(range(149), 6)
-            for s in range(6):
-                pokedex_num = new_team[s]
-                rom[offset] = pokedex_num + 1  # Write Pokémon index
-                offset += 1
+    if setting_gymcastle_round1 > 0:
+        print("Randomizing round 1 gym castle trainers...")
+        offset = constants.rom_offsets["US_1.0"]["GymCastle_Round1"]
+        for q in range(10):
+            team_count = 4 if q < 9 else 7
+            for r in range(team_count):
+                new_team = random.sample(range(151), 6)
+                for s in range(6):
+                    pokedex_num = new_team[s]
+                    rom[offset] = pokedex_num + 1  # Write Pokémon index
+                    offset += 1
 
-                offset += 5  # Seek forward by 5 bytes
+                    offset += 5  # Seek forward by 5 bytes
 
-                new_type = bytes.fromhex(constants.kanto_dex_names[pokedex_num]["type"])
-                rom[offset:offset + len(new_type)] = new_type  # Write Pokémon type
-                offset += len(new_type)
+                    new_type = bytes.fromhex(constants.kanto_dex_names[pokedex_num]["type"])
+                    rom[offset:offset + len(new_type)] = new_type  # Write Pokémon type
+                    offset += len(new_type)
 
-                offset += 1  # Seek forward by 1 byte
+                    offset += 1  # Seek forward by 1 byte
 
-                # Randomize moveset unless setting is 'Vanilla'
-                if setting_gymcastle_round1 > 0:
-                    new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], setting_gymcastle_round1)
+                    # Random moveset
+                    new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[pokedex_num], setting_gymcastle_round1, new_type)
                     for attack in new_attacks:
                         rom[offset] = attack
                         offset += 1
-                else:
+
                     offset += 4  # Seek forward by 4 bytes
 
-                offset += 4  # Seek forward by 4 bytes
+                    exp = int.to_bytes(int(constants.kanto_dex_names[pokedex_num]["exp"]), 3, "big")
+                    rom[offset:offset + 3] = exp
+                    offset += 3
 
-                exp = int.to_bytes(int(constants.kanto_dex_names[pokedex_num]["exp"]), 3, "big")
-                rom[offset:offset + 3] = exp
-                offset += 3
+                    for t in range(5):
+                        ev = int.to_bytes(evs[pokedex_num][t], 2, "big")
+                        rom[offset:offset + 2] = ev
+                        offset += 2
 
-                for t in range(5):
-                    ev = int.to_bytes(evs[pokedex_num][t], 2, "big")
-                    rom[offset:offset + 2] = ev
-                    offset += 2
+                    ivs_bytes = bytes.fromhex(ivs[pokedex_num])
+                    rom[offset:offset + len(ivs_bytes)] = ivs_bytes
+                    offset += len(ivs_bytes)
 
-                ivs_bytes = bytes.fromhex(ivs[pokedex_num])
-                rom[offset:offset + len(ivs_bytes)] = ivs_bytes
-                offset += len(ivs_bytes)
+                    offset += 6  # Seek forward by 6 bytes
 
-                offset += 6  # Seek forward by 6 bytes
+                    disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(
+                        new_display_stats[pokedex_num], evs[pokedex_num], ivs[pokedex_num]
+                    )
+                    rom[offset:offset + len(disp)] = disp
+                    offset += len(disp)
 
-                disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(
-                    new_display_stats[pokedex_num], evs[pokedex_num], ivs[pokedex_num]
-                )
-                rom[offset:offset + len(disp)] = disp
-                offset += len(disp)
+                    pokemon_name = constants.kanto_dex_names[pokedex_num]["name"].encode()
+                    rom[offset:offset + len(pokemon_name)] = pokemon_name
+                    offset += len(pokemon_name)
 
-                pokemon_name = constants.kanto_dex_names[pokedex_num]["name"].encode()
-                rom[offset:offset + len(pokemon_name)] = pokemon_name
-                offset += len(pokemon_name)
+                    # Check if a Nidoran is being written in to add their gender symbol
+                    if pokedex_num == 28:
+                        rom[offset:offset + 1] = bytes.fromhex("BE")  # Female symbol
+                        offset += 1
+                        pokemon_name += b" "
+                    elif pokedex_num == 31:
+                        rom[offset:offset + 1] = bytes.fromhex("A9")  # Male symbol
+                        offset += 1
+                        pokemon_name += b" "
 
-                # Check if a Nidoran is being written in to add their gender symbol
-                if pokedex_num == 28:
-                    rom[offset:offset + 1] = bytes.fromhex("BE")  # Female symbol
-                    offset += 1
-                    pokemon_name += b" "
-                elif pokedex_num == 31:
-                    rom[offset:offset + 1] = bytes.fromhex("A9")  # Male symbol
-                    offset += 1
-                    pokemon_name += b" "
+                    # Fill in blank spaces to make the name 11 bytes long
+                    if len(pokemon_name) < 11:
+                        blanks = 11 - len(pokemon_name)
+                        rom[offset:offset + blanks] = b"\x00" * blanks
+                        offset += blanks
 
-                # Fill in blank spaces to make the name 11 bytes long
-                if len(pokemon_name) < 11:
-                    blanks = 11 - len(pokemon_name)
-                    rom[offset:offset + blanks] = b"\x00" * blanks
-                    offset += blanks
-
-                offset += 25  # Seek forward by 25 bytes
-            offset += 56  # Seek forward by 56 bytes
-        offset += 16  # Seek forward by 16 bytes
+                    offset += 25  # Seek forward by 25 bytes
+                offset += 56  # Seek forward by 56 bytes
+            offset += 16  # Seek forward by 16 bytes
 
     # randomize gym castle rentals
-    print("Randomizing round 1 gym castle rentals...")
-    offset = constants.rom_offsets["US_1.0"]["EmptyRomSpace"]
+    if setting_rentals_round1 > 0:
+        print("Randomizing round 1 gym castle rentals...")
+        offset = constants.rom_offsets["US_1.0"]["EmptyRomSpace"]
 
-    # Write expected number of returned Pokémon
-    rom[offset:offset + 4] = bytes.fromhex("00000097")
-    offset += 4
+        # Write expected number of returned Pokémon
+        rom[offset:offset + 4] = bytes.fromhex("00000097")
+        offset += 4
 
-    for j in range(151):
-        rom[offset] = j + 1  # Write Dex number
-        offset += 1
+        for j in range(151):
+            rom[offset] = j + 1  # Write Dex number
+            offset += 1
 
-        rom[offset:offset + 1] = bytes.fromhex("00")
-        offset += 1
+            rom[offset:offset + 1] = bytes.fromhex("00")
+            offset += 1
 
-        rom[offset:offset + 2] = bytes.fromhex("0080")  # "Current HP"
-        offset += 2
+            rom[offset:offset + 2] = bytes.fromhex("0080")  # "Current HP"
+            offset += 2
 
-        rom[offset:offset + 1] = bytes.fromhex("32")  # Level
-        offset += 1
+            rom[offset:offset + 1] = bytes.fromhex("32")  # Level
+            offset += 1
 
-        rom[offset:offset + 1] = bytes.fromhex("00")  # Status
-        offset += 1
+            rom[offset:offset + 1] = bytes.fromhex("00")  # Status
+            offset += 1
 
-        rom[offset:offset + 2] = bytes.fromhex(constants.kanto_dex_names[j]["type"])  # Type(s)
-        offset += 2
+            pkm_type = bytes.fromhex(constants.kanto_dex_names[j]["type"])
+            rom[offset:offset + 2] = pkm_type # Type(s)
+            offset += 2
 
-        rom[offset:offset + 1] = bytes.fromhex("00")
-        offset += 1
+            rom[offset:offset + 1] = bytes.fromhex("00")
+            offset += 1
 
-        # Randomize moveset unless setting is 'Vanilla'
-        if setting_rentals_round1 > 0:
-            new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], setting_rentals_round1)
+            # Random moveset
+            new_attacks = randomMovesetGenerator.MovesetGenerator.get_random_moveset(bst_list[j], setting_rentals_round1, pkm_type)
             for attack in new_attacks:
                 rom[offset] = attack
                 offset += 1
-        else:
-            rom[offset:offset + 4] = bytes.fromhex("00000000")  # Placeholder for vanilla moves
-            offset += 4
 
-        rom[offset:offset + 1] = bytes.fromhex("00")
-        offset += 1
+            rom[offset:offset + 1] = bytes.fromhex("00")
+            offset += 1
 
-        rom[offset:offset + 2] = bytes.fromhex("1110")  # Trainer ID
-        offset += 2
-
-        rom[offset:offset + 1] = bytes.fromhex("00")
-        offset += 1
-
-        exp_bytes = int.to_bytes(int(constants.kanto_dex_names[j]["exp"]), 3, "big")
-        rom[offset:offset + 3] = exp_bytes  # Experience
-        offset += 3
-
-        for k in range(5):
-            ev = int.to_bytes(evs[j][k], 2, "big")
-            rom[offset:offset + 2] = ev
+            rom[offset:offset + 2] = bytes.fromhex("1110")  # Trainer ID
             offset += 2
 
-        ivs_bytes = bytes.fromhex(ivs[j])
-        rom[offset:offset + len(ivs_bytes)] = ivs_bytes
-        offset += len(ivs_bytes)
+            rom[offset:offset + 1] = bytes.fromhex("00")
+            offset += 1
 
-        rom[offset:offset + 4] = bytes.fromhex("00000000")
-        offset += 4  # I think setting these to 0 gives you the vanilla PP for moves
+            exp_bytes = int.to_bytes(int(constants.kanto_dex_names[j]["exp"]), 3, "big")
+            rom[offset:offset + 3] = exp_bytes  # Experience
+            offset += 3
 
-        rom[offset:offset + 1] = bytes.fromhex("32")  # Level again
-        offset += 1
+            for k in range(5):
+                ev = int.to_bytes(evs[j][k], 2, "big")
+                rom[offset:offset + 2] = ev
+                offset += 2
 
-        rom[offset:offset + 1] = bytes.fromhex("00")
-        offset += 1
+            ivs_bytes = bytes.fromhex(ivs[j])
+            rom[offset:offset + len(ivs_bytes)] = ivs_bytes
+            offset += len(ivs_bytes)
 
-        disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
-        rom[offset:offset + len(disp)] = disp
-        offset += len(disp)
+            rom[offset:offset + 4] = bytes.fromhex("00000000")
+            offset += 4  # I think setting these to 0 gives you the vanilla PP for moves
 
-        pokemon_name = constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')
-        rom[offset:offset + 11] = pokemon_name  # Name
-        offset += 11
+            rom[offset:offset + 1] = bytes.fromhex("32")  # Level again
+            offset += 1
 
-        rom[offset:offset + 8] = bytes.fromhex("52414E444F000000")  # Trainer name (RANDO)
-        offset += 8
+            rom[offset:offset + 1] = bytes.fromhex("00")
+            offset += 1
 
-        rom[offset:offset + 17] = bytes.fromhex("0000000000000000000000000000000000")  # Padding
-        offset += 17
+            disp = writeDisplayData.DisplayDataWriter.write_gym_tower_display(new_display_stats[j], evs[j], ivs[j])
+            rom[offset:offset + len(disp)] = disp
+            offset += len(disp)
+
+            pokemon_name = constants.kanto_dex_names[j]["name"].encode().ljust(11, b'\x00')
+            rom[offset:offset + 11] = pokemon_name  # Name
+            offset += 11
+
+            rom[offset:offset + 8] = bytes.fromhex("52414E444F000000")  # Trainer name (RANDO)
+            offset += 8
+
+            rom[offset:offset + 17] = bytes.fromhex("0000000000000000000000000000000000")  # Padding
+            offset += 17
 
     return rom
