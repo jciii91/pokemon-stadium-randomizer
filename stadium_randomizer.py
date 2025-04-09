@@ -31,6 +31,21 @@ def randomizer_func(rom, settings_dict):
     offset = constants.rom_offsets[setting_version]["CheckSum2"]
     new_bytes = bytes.fromhex("00000000")
     rom[offset:offset + len(new_bytes)] = new_bytes
+
+    # add built-in rental rando
+    print("Writing rental rando mips...")
+    offset = constants.rom_offsets[setting_version]["Rental_Table_Input_Routine"]
+    rom[offset:offset + len(constants.load_custom_routines_mips)] = constants.load_custom_routines_mips
+
+    new_header = bytes.fromhex("507265737320535441525420746F2052616E646F") # Press START to Rando
+    offset = constants.rom_offsets[setting_version]["Rental_Table_Header"]
+    rom[offset:offset + len(new_header)] = new_header
+
+    offset = constants.rom_offsets[setting_version]["EmptyRomSpace"]
+    rom[offset:offset + len(constants.rental_rando_mips)] = constants.rental_rando_mips
+
+    offset = offset + len(constants.rental_rando_mips)
+    rom[offset:offset + len(constants.rental_table_idle_mips)] = constants.rental_table_idle_mips
     
     # randomize base stats, unless setting set to 'Vanilla'
     if setting_base_stats > 0:
@@ -137,7 +152,7 @@ def randomizer_func(rom, settings_dict):
     # randomize gym castle rentals
     if setting_rentals_round1 > 0:
         print("Randomizing round 1 gym castle rentals...")
-        offset = constants.rom_offsets[setting_version]["EmptyRomSpace"]
+        offset = constants.rom_offsets[setting_version]["EmptyRomSpaceForTables"]
 
         # Write expected number of returned Pokémon
         rom[offset:offset + 4] = bytes.fromhex("00000097")
