@@ -46,6 +46,12 @@ def randomizer_func(rom, settings_dict):
 
     offset = offset + len(constants.rental_rando_mips)
     rom[offset:offset + len(constants.rental_table_idle_mips)] = constants.rental_table_idle_mips
+
+    offset = offset + len(constants.rental_table_idle_mips)
+    rom[offset:offset + len(constants.rental_rando_mips_reg)] = constants.rental_rando_mips_reg
+
+    offset = offset + len(constants.rental_rando_mips_reg)
+    rom[offset:offset + len(constants.rental_table_idle_mips_reg)] = constants.rental_table_idle_mips_reg
     
     # randomize base stats, unless setting set to 'Vanilla'
     if setting_base_stats > 0:

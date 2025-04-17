@@ -12,7 +12,7 @@ def main():
 
     rom = stadium_randomizer.randomizer_func(binary_data, settings_dict)
 
-    with open("base_stats_1.z64", "wb") as file:
+    with open("1-0_reg_support.z64", "wb") as file:
         file.write(rom)  # Writes the raw binary data back
 
 if __name__ == "__main__":
