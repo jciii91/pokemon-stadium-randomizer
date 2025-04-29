@@ -54,28 +54,35 @@ def randomizer_func(rom, settings_dict):
     rom[offset:offset + len(constants.rental_table_idle_mips_reg)] = constants.rental_table_idle_mips_reg
     
     # randomize base stats, unless setting set to 'Vanilla'
+    # store bst no matter what
     if setting_base_stats > 0:
         print("Randomizing base stats...")
-        offset = constants.rom_offsets[setting_version]["BaseStats"]
-        for _ in range(151):
-            stats = rom[offset:offset + 5]  # Read 5 bytes
-            randomizer.set_original_stats(stats)
-            randomized_base_stats = randomizer.randomize_stats()
+    
+    offset = constants.rom_offsets[setting_version]["BaseStats"]
+    for _ in range(151):
+        stats = rom[offset:offset + 5]  # Read 5 bytes
+        if setting_base_stats == 0:
+            bst_list.append(stats)
+            new_display_stats.append(stats)
+            continue
 
-            # Convert to list of integers for BST processing
-            bst_list.append(list(randomized_base_stats))
+        randomizer.set_original_stats(stats)
+        randomized_base_stats = randomizer.randomize_stats()
 
-            # Store modified stats for display
-            new_display_stats.append(randomized_base_stats)
+        # Convert to list of integers for BST processing
+        bst_list.append(list(randomized_base_stats))
 
-            # Write the new randomized stats back
-            rom[offset:offset + 5] = randomized_base_stats
+        # Store modified stats for display
+        new_display_stats.append(randomized_base_stats)
 
-            # Move to the next Pokémon entry (skip 18 additional bytes)
-            offset += 23
+        # Write the new randomized stats back
+        rom[offset:offset + 5] = randomized_base_stats
+
+        # Move to the next Pokémon entry (skip 18 additional bytes)
+        offset += 23
 
     # change pointer for gym castle round 1 rentals to custom table
-    if setting_gymcastle_round1 > 0:
+    if setting_rentals_round1 > 0:
         print("Redirecting round 1 rental table pointer...")
         offset = constants.rom_offsets[setting_version]["Rental_GymCastle_Round1_Pointer"]
         new_bytes = bytes.fromhex(constants.rom_offsets[setting_version]["OffsetToNewTable"]) # write new offset and new table size
