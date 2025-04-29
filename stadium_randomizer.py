@@ -61,22 +61,22 @@ def randomizer_func(rom, settings_dict):
     offset = constants.rom_offsets[setting_version]["BaseStats"]
     for _ in range(151):
         stats = rom[offset:offset + 5]  # Read 5 bytes
-        if setting_base_stats == 0:
+        if setting_base_stats > 0:
+            randomizer.set_original_stats(stats)
+            randomized_base_stats = randomizer.randomize_stats()
+
+            # Convert to list of integers for BST processing
+            bst_list.append(list(randomized_base_stats))
+
+            # Store modified stats for display
+            new_display_stats.append(randomized_base_stats)
+
+            # Write the new randomized stats back
+            rom[offset:offset + 5] = randomized_base_stats
+        else:
+            # store vanilla stats
             bst_list.append(stats)
             new_display_stats.append(stats)
-            continue
-
-        randomizer.set_original_stats(stats)
-        randomized_base_stats = randomizer.randomize_stats()
-
-        # Convert to list of integers for BST processing
-        bst_list.append(list(randomized_base_stats))
-
-        # Store modified stats for display
-        new_display_stats.append(randomized_base_stats)
-
-        # Write the new randomized stats back
-        rom[offset:offset + 5] = randomized_base_stats
 
         # Move to the next Pokémon entry (skip 18 additional bytes)
         offset += 23
